@@ -1,0 +1,230 @@
+/* ============================================================
+   Apple Design System — 图床前端
+   设计原则：系统字体排版 / 毛玻璃材质 / 弹簧动效 /
+            按压反馈 / 克制留白 / 尊重 reduced-motion
+   ============================================================ */
+
+:root {
+  /* 配色 —— 取自 Apple 系统调色板 */
+  --accent: #007aff;
+  --accent-pressed: #0062cc;
+  --accent-soft: rgba(0, 122, 255, 0.1);
+  --label: #1d1d1f;
+  --label-secondary: #6e6e73;
+  --label-tertiary: #aeaeb2;
+  --separator: rgba(60, 60, 67, 0.12);
+  --fill: rgba(118, 118, 128, 0.08);
+  --fill-hover: rgba(118, 118, 128, 0.14);
+  --bg: #f5f5f7;
+  --surface: rgba(255, 255, 255, 0.72);
+  --surface-solid: #ffffff;
+  --danger: #ff3b30;
+  --success: #34c759;
+  --warning: #ff9f0a;
+
+  /* 圆角 */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-xl: 26px;
+  --r-pill: 999px;
+
+  /* 阴影 —— 柔和、分层 */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.06), 0 10px 30px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.1), 0 24px 70px rgba(0, 0, 0, 0.1);
+
+  /* 弹簧缓动 —— 过冲带回弹，可中断 */
+  --spring: cubic-bezier(0.32, 1.4, 0.5, 1);
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
+    Roboto, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--label);
+  /* 字体渲染优化 */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "kern" 1;
+  text-rendering: optimizeLegibility;
+  letter-spacing: -0.01em;
+  line-height: 1.5;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ---------- 大标题排版（Apple 风） ---------- */
+.app-title {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+.app-subtitle {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--label);
+}
+.app-caption {
+  font-size: 13px;
+  color: var(--label-secondary);
+  letter-spacing: 0;
+}
+
+/* ---------- 毛玻璃材质 ---------- */
+.glass {
+  background: var(--surface);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: var(--shadow-md);
+}
+
+/* ---------- Apple 风卡片 ---------- */
+.app-card {
+  background: var(--surface-solid);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 20px;
+  transition: transform 0.4s var(--spring), box-shadow 0.4s var(--ease);
+}
+.app-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* ---------- 按压反馈 ---------- */
+.press {
+  transition: transform 0.18s var(--ease), background 0.18s var(--ease),
+    opacity 0.18s var(--ease);
+  cursor: pointer;
+}
+.press:active {
+  transform: scale(0.96);
+}
+
+/* ---------- 入场动画（可中断、弹簧） ---------- */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.rise-in {
+  animation: rise 0.5s var(--spring) both;
+}
+
+/* 列表项交错入场 */
+.stagger > * {
+  animation: rise 0.5s var(--spring) both;
+}
+.stagger > *:nth-child(1) { animation-delay: 0.02s; }
+.stagger > *:nth-child(2) { animation-delay: 0.06s; }
+.stagger > *:nth-child(3) { animation-delay: 0.1s; }
+.stagger > *:nth-child(4) { animation-delay: 0.14s; }
+.stagger > *:nth-child(5) { animation-delay: 0.18s; }
+.stagger > *:nth-child(6) { animation-delay: 0.22s; }
+.stagger > *:nth-child(n + 7) { animation-delay: 0.26s; }
+
+/* ---------- 滚动条（克制） ---------- */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(60, 60, 67, 0.2);
+  border-radius: var(--r-pill);
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(60, 60, 67, 0.35);
+  background-clip: content-box;
+}
+
+/* ---------- 无障碍：尊重 reduced-motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------- 景深背景（登录/落地页） ---------- */
+.app-aurora {
+  position: relative;
+  background: linear-gradient(160deg, #eef2ff 0%, #f5f5f7 45%, #fdf2f8 100%);
+  overflow: hidden;
+}
+.app-aurora::before,
+.app-aurora::after {
+  content: "";
+  position: absolute;
+  width: 60vmax;
+  height: 60vmax;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.45;
+  pointer-events: none;
+}
+.app-aurora::before {
+  background: radial-gradient(circle, #5e9bff 0%, transparent 70%);
+  top: -20vmax;
+  left: -10vmax;
+  animation: drift 18s var(--ease) infinite alternate;
+}
+.app-aurora::after {
+  background: radial-gradient(circle, #ff8fb3 0%, transparent 70%);
+  bottom: -25vmax;
+  right: -12vmax;
+  animation: drift 22s var(--ease) infinite alternate-reverse;
+}
+@keyframes drift {
+  to {
+    transform: translate(8vmax, 6vmax) scale(1.1);
+  }
+}
+
+/* ---------- 覆盖 naive-ui Popconfirm / Popover 入场动画 ----------
+   原来是 scale 放大蹦出，改为与下拉一致的「缓慢淡入下滑」 */
+.n-popover.popover-transition-enter-from {
+  opacity: 0 !important;
+  transform: translateY(-8px) !important;
+}
+.n-popover.popover-transition-enter-active {
+  transition: opacity 0.26s var(--ease), transform 0.26s var(--ease) !important;
+}
+.n-popover.popover-transition-leave-to {
+  opacity: 0 !important;
+  transform: translateY(-8px) !important;
+}
+.n-popover.popover-transition-leave-active {
+  transition: opacity 0.18s var(--ease), transform 0.18s var(--ease) !important;
+}
