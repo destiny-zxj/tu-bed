@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref } from "vue"
-import { useMessage, NCard, NUpload, NUploadDragger, NText, NP, NSpace, NImage, NButton, NEmpty } from "naive-ui"
+import { useMessage, NCard, NUpload, NUploadDragger, NText, NP, NImage, NButton, NEmpty, NIcon } from "naive-ui"
 import type { UploadCustomRequestOptions } from "naive-ui"
+import { CloudUploadOutline } from "@vicons/ionicons5"
 import api, { type Image } from "@/api"
 import { copyText, formatSize } from "@/utils/format"
 
@@ -49,7 +50,9 @@ async function copyUrl(url: string) {
       >
         <n-upload-dragger class="dropzone press" :class="{ 'dropzone--over': dragOver }">
           <div class="dropzone-inner">
-            <div class="dropzone-icon">⬆︎</div>
+            <div class="dropzone-icon">
+              <n-icon :size="26"><CloudUploadOutline /></n-icon>
+            </div>
             <n-text class="app-subtitle">点击或拖拽图片到此处</n-text>
             <n-p depth="3" class="app-caption" style="margin-top: 6px; display: block">
               支持 JPG / PNG / GIF / WEBP，可多选

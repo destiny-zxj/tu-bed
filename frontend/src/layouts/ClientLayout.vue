@@ -1,17 +1,18 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router"
-import { useMessage, NLayout, NLayoutHeader, NMenu, NAvatar, NText } from "naive-ui"
+import { useMessage, NLayout, NLayoutHeader, NMenu, NAvatar, NText, NIcon } from "naive-ui"
 import type { MenuOption } from "naive-ui"
-import { computed, ref, onMounted, onBeforeUnmount } from "vue"
+import { computed, ref, onMounted, onBeforeUnmount, h } from "vue"
 import { useAuthStore } from "@/stores/auth"
+import { CloudUploadOutline, ImageOutline } from "@vicons/ionicons5"
 
 const router = useRouter()
 const auth = useAuthStore()
 const message = useMessage()
 
 const menuOptions: MenuOption[] = [
-  { label: "上传", key: "/app", icon: () => "⬆︎" },
-  { label: "我的图片", key: "/app/images", icon: () => "🖼" },
+  { label: "上传", key: "/app", icon: () => h(NIcon, null, { default: () => h(CloudUploadOutline) }) },
+  { label: "我的图片", key: "/app/images", icon: () => h(NIcon, null, { default: () => h(ImageOutline) }) },
 ]
 
 const activeKey = computed(() => {

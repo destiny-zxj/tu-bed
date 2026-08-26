@@ -32,6 +32,19 @@ export interface Stats {
   total_storage_bytes: number
 }
 
+export interface ApiKey {
+  id: number
+  name: string
+  prefix: string
+  is_active: boolean
+  created_at: string
+  last_used_at?: string | null
+}
+
+export interface ApiKeyCreated extends ApiKey {
+  key: string
+}
+
 const api = {
   login: (username: string, password: string) =>
     request.post<{ access_token: string }>("/auth/login", { username, password }),
@@ -47,6 +60,11 @@ const api = {
     })
   },
   deleteImage: (id: number) => request.delete(`/images/${id}`),
+
+  // api keys
+  listApiKeys: () => request.get<ApiKey[]>("/apikeys"),
+  createApiKey: (name: string) => request.post<ApiKeyCreated>("/apikeys", { name }),
+  deleteApiKey: (id: number) => request.delete(`/apikeys/${id}`),
 
   // admin
   adminStats: () => request.get<Stats>("/admin/stats"),

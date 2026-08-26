@@ -1,26 +1,29 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router"
-import { NLayout, NLayoutSider, NLayoutHeader, NLayoutContent, NMenu, NAvatar, NText, NSpace } from "naive-ui"
+import { NLayout, NLayoutSider, NLayoutHeader, NLayoutContent, NMenu, NAvatar, NText, NIcon } from "naive-ui"
 import type { MenuOption } from "naive-ui"
 import { h, computed, ref, onMounted, onBeforeUnmount } from "vue"
 import { useAuthStore } from "@/stores/auth"
 import { useMessage } from "naive-ui"
+import { BarChartOutline, PersonOutline, ImageOutline, KeyOutline, CloudUploadOutline } from "@vicons/ionicons5"
 
 const router = useRouter()
 const auth = useAuthStore()
 const message = useMessage()
 
 const menuOptions: MenuOption[] = [
-  { label: "概览", key: "/admin", icon: () => "📊" },
-  { label: "用户管理", key: "/admin/users", icon: () => "👤" },
-  { label: "图片管理", key: "/admin/images", icon: () => "🖼" },
-  { label: "图床客户端", key: "/app", icon: () => "⬆︎" },
+  { label: "概览", key: "/admin", icon: () => h(NIcon, null, { default: () => h(BarChartOutline) }) },
+  { label: "用户管理", key: "/admin/users", icon: () => h(NIcon, null, { default: () => h(PersonOutline) }) },
+  { label: "图片管理", key: "/admin/images", icon: () => h(NIcon, null, { default: () => h(ImageOutline) }) },
+  { label: "API Keys 管理", key: "/admin/apikeys", icon: () => h(NIcon, null, { default: () => h(KeyOutline) }) },
+  { label: "图床客户端", key: "/app", icon: () => h(NIcon, null, { default: () => h(CloudUploadOutline) }) },
 ]
 
 const activeKey = computed(() => {
   const p = router.currentRoute.value.path
   if (p.startsWith("/admin/users")) return "/admin/users"
   if (p.startsWith("/admin/images")) return "/admin/images"
+  if (p.startsWith("/admin/apikeys")) return "/admin/apikeys"
   return "/admin"
 })
 

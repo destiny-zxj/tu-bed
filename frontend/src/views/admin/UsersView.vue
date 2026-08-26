@@ -79,20 +79,16 @@ const columns = (): DataTableColumns<User> => [
     title: "操作",
     key: "actions",
     render: (row) =>
-      h(
-        "n-space",
-        {},
-        {
-          default: () => [
-            h("n-button", { size: "small", class: "press", onClick: () => toggleActive(row) }, {
-              default: () => (row.is_active ? "禁用" : "启用"),
-            }),
-            h("n-button", { size: "small", type: "error", class: "press", onClick: () => remove(row) }, {
-              default: () => "删除",
-            }),
-          ],
-        },
-      ),
+      h(NSpace, { size: 4 }, {
+        default: () => [
+          h(NButton, { size: "small", type: "warning", class: "press", onClick: () => toggleActive(row) }, {
+            default: () => (row.is_active ? "禁用" : "启用"),
+          }),
+          h(NButton, { size: "small", type: "error", class: "press", onClick: () => remove(row) }, {
+            default: () => "删除",
+          }),
+        ],
+      }),
   },
 ]
 
@@ -105,9 +101,7 @@ onMounted(load)
       <n-button type="primary" class="press" @click="showCreate = true">新建用户</n-button>
     </template>
     <n-data-table :columns="columns()" :data="users" :bordered="false" />
-  </n-card>
-
-  <n-modal v-model:show="showCreate" title="新建用户" preset="card" style="width: 420px">
+    <n-modal v-model:show="showCreate" title="新建用户" preset="card" style="width: 420px">
     <n-form @submit.prevent="create">
       <n-form-item label="用户名">
         <n-input v-model:value="form.username" size="large" />
@@ -130,5 +124,6 @@ onMounted(load)
         创建
       </n-button>
     </n-form>
-  </n-modal>
+    </n-modal>
+  </n-card>
 </template>

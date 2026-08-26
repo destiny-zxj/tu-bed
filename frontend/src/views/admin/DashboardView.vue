@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue"
-import { NCard, NStatistic, NNumberAnimation } from "naive-ui"
+import { NCard, NNumberAnimation, NIcon } from "naive-ui"
+import { PersonOutline, ImageOutline, ServerOutline } from "@vicons/ionicons5"
 import api, { type Stats } from "@/api"
 import { formatSize } from "@/utils/format"
 
@@ -11,9 +12,9 @@ onMounted(async () => {
 })
 
 const tiles = [
-  { icon: "👤", label: "用户总数", tint: "rgba(0,122,255,.12)", color: "#007aff" },
-  { icon: "🖼", label: "图片总数", tint: "rgba(52,199,89,.12)", color: "#34c759" },
-  { icon: "💾", label: "存储用量", tint: "rgba(255,159,10,.12)", color: "#ff9f0a" },
+  { icon: PersonOutline, label: "用户总数", tint: "rgba(0,122,255,.12)", color: "#007aff" },
+  { icon: ImageOutline, label: "图片总数", tint: "rgba(52,199,89,.12)", color: "#34c759" },
+  { icon: ServerOutline, label: "存储用量", tint: "rgba(255,159,10,.12)", color: "#ff9f0a" },
 ]
 </script>
 
@@ -22,7 +23,9 @@ const tiles = [
     <div class="app-title" style="margin-bottom: 18px">概览</div>
     <div class="stat-grid stagger">
       <n-card v-for="(t, i) in tiles" :key="t.label" class="app-card stat-tile" :bordered="false">
-        <div class="stat-icon" :style="{ background: t.tint, color: t.color }">{{ t.icon }}</div>
+        <div class="stat-icon" :style="{ background: t.tint, color: t.color }">
+          <n-icon :component="t.icon" :size="22" />
+        </div>
         <div class="stat-label app-caption">{{ t.label }}</div>
         <div class="stat-value">
           <n-number-animation
