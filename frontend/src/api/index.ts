@@ -26,15 +26,6 @@ export interface ImageList {
   items: Image[]
 }
 
-export interface ApiKey {
-  id: number
-  name: string
-  prefix: string
-  is_active: boolean
-  created_at: string
-  last_used_at?: string
-}
-
 export interface Stats {
   total_users: number
   total_images: number
@@ -56,11 +47,6 @@ const api = {
     })
   },
   deleteImage: (id: number) => request.delete(`/images/${id}`),
-
-  listApiKeys: () => request.get<ApiKey[]>("/apikeys"),
-  createApiKey: (name: string) =>
-    request.post<ApiKey & { key: string }>("/apikeys", { name }),
-  deleteApiKey: (id: number) => request.delete(`/apikeys/${id}`),
 
   // admin
   adminStats: () => request.get<Stats>("/admin/stats"),

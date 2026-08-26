@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router"
-import { NLayout, NLayoutSider, NLayoutHeader, NMenu, NAvatar, NText, NSpace } from "naive-ui"
+import { NLayout, NLayoutSider, NLayoutHeader, NLayoutContent, NMenu, NAvatar, NText, NSpace } from "naive-ui"
 import type { MenuOption } from "naive-ui"
 import { h, computed, ref, onMounted, onBeforeUnmount } from "vue"
 import { useAuthStore } from "@/stores/auth"
@@ -25,6 +25,10 @@ const activeKey = computed(() => {
 })
 
 function handleSelect(key: string) {
+  if (key === "/app") {
+    window.open("/app", "_blank")
+    return
+  }
   router.push(key)
 }
 
@@ -54,6 +58,7 @@ onBeforeUnmount(() => document.removeEventListener("click", onClickOutside))
       show-trigger="bar"
       collapse-mode="width"
       bordered
+      :native-scrollbar="false"
     >
       <div class="sider-brand">
         <div class="brand-logo">Tu</div>
@@ -88,13 +93,15 @@ onBeforeUnmount(() => document.removeEventListener("click", onClickOutside))
       <n-layout-header class="admin-header glass">
         <span class="app-subtitle">管理后台</span>
       </n-layout-header>
-      <div class="admin-body">
-        <router-view v-slot="{ Component }">
-          <transition name="page" mode="out-in">
-            <component :is="Component" />
-          </transition>
-        </router-view>
-      </div>
+      <n-layout-content class="admin-content">
+        <div class="admin-body">
+          <router-view v-slot="{ Component }">
+            <transition name="page" mode="out-in">
+              <component :is="Component" />
+            </transition>
+          </router-view>
+        </div>
+      </n-layout-content>
     </n-layout>
   </n-layout>
 </template>
@@ -103,9 +110,25 @@ onBeforeUnmount(() => document.removeEventListener("click", onClickOutside))
 .admin-sider {
   display: flex;
   flex-direction: column;
+  height: 100vh;
+  min-height: 100vh;
   padding: 16px 12px;
   border-right: 1px solid var(--separator);
-  z-index: 20;
+  z-index: 100;
+  position: relative;
+}
+/* 让 sider 不裁剪底部弹出的用户菜单 */
+.admin-sider :deep(.n-layout-sider-scroll-container),
+.admin-sider :deep(.n-layout-sider),
+.admin-sider :deep(.n-scrollbar),
+.admin-sider :deep(.n-scrollbar-container) {
+  overflow: visible !important;
+}
+/* 让菜单区内部内容容器成为 flex 列，使底部用户块可用 margin-top:auto 贴底 */
+.admin-sider :deep(.n-scrollbar-content) {
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 100% !important;
 }
 .sider-brand {
   display: flex;
@@ -127,10 +150,11 @@ onBeforeUnmount(() => document.removeEventListener("click", onClickOutside))
   flex-shrink: 0;
 }
 .admin-menu {
-  flex: 1;
+  padding-top: 4px;
 }
 .sider-user {
   position: relative;
+  margin-top: auto;
   padding-top: 12px;
   border-top: 1px solid var(--separator);
 }
@@ -145,12 +169,15 @@ onBeforeUnmount(() => document.removeEventListener("click", onClickOutside))
 }
 .user-menu {
   position: absolute;
-  top: calc(100% + 8px);
+  bottom: calc(100% + 8px);
   left: 0;
   right: 0;
   padding: 6px;
   border-radius: var(--r-md);
   z-index: 50;
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--separator);
 }
 .user-menu-item {
   display: block;
@@ -181,12 +208,34 @@ onBeforeUnmount(() => document.removeEventListener("click", onClickOutside))
 .dropdown-enter-from,
 .dropdown-leave-to {
   opacity: 0;
-  transform: translateY(-10px);
+  transform: translateY(10px);
 }
 .user-meta {
   display: flex;
   flex-direction: column;
   line-height: 1.25;
+}
+
+/* ---------- 收起态：隐藏文字、仅留图标、内容居中 ---------- */
+.admin-sider.n-layout-sider--collapsed .sider-brand {
+  justify-content: center;
+  padding: 8px 0 18px;
+}
+.admin-sider.n-layout-sider--collapsed :deep(.sider-name),
+.admin-sider.n-layout-sider--collapsed :deep(.user-meta) {
+  display: none !important;
+}
+.admin-sider.n-layout-sider--collapsed .user-pill {
+  justify-content: center;
+  padding: 6px 0;
+  width: auto;
+}
+/* 收起态下用户下拉浮出窄栏外，避免文字被裁 */
+.admin-sider.n-layout-sider--collapsed .user-menu {
+  width: 140px;
+  left: 0;
+  right: auto;
+  transform: none;
 }
 .admin-header {
   height: 56px;
@@ -195,8 +244,12 @@ onBeforeUnmount(() => document.removeEventListener("click", onClickOutside))
   padding: 0 24px;
   border-bottom: 1px solid var(--separator);
 }
+.admin-content {
+  background: transparent;
+}
 .admin-body {
   padding: 26px 24px 60px;
+  min-height: calc(100vh - 56px);
 }
 .sider-name {
   white-space: nowrap;

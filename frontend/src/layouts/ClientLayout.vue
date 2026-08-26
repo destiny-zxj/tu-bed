@@ -12,13 +12,11 @@ const message = useMessage()
 const menuOptions: MenuOption[] = [
   { label: "上传", key: "/app", icon: () => "⬆︎" },
   { label: "我的图片", key: "/app/images", icon: () => "🖼" },
-  { label: "API 密钥", key: "/app/apikeys", icon: () => "🔑" },
 ]
 
 const activeKey = computed(() => {
   const p = router.currentRoute.value.path
   if (p.startsWith("/app/images")) return "/app/images"
-  if (p.startsWith("/app/apikeys")) return "/app/apikeys"
   return "/app"
 })
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { NConfigProvider, NMessageProvider, NDialogProvider, NGlobalStyle } from "naive-ui"
+import { NConfigProvider, NMessageProvider, NDialogProvider, NGlobalStyle, zhCN } from "naive-ui"
 import type { GlobalThemeOverrides } from "naive-ui"
 
 const fontStack =
@@ -34,7 +34,7 @@ const themeOverride: GlobalThemeOverrides = {
 </script>
 
 <template>
-  <n-config-provider :theme-overrides="themeOverride">
+  <n-config-provider :theme-overrides="themeOverride" :locale="zhCN">
     <n-message-provider>
       <n-dialog-provider>
         <n-global-style />

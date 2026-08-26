@@ -25,8 +25,8 @@ def _configured() -> bool:
 
 def _make_key(original_name: str) -> str:
     ext = os.path.splitext(original_name)[1].lower()
-    date_sub = datetime.now().strftime("%Y/%m/%d")
-    return f"images/{date_sub}/{uuid.uuid4().hex}{ext}"
+    date_sub = datetime.now().strftime("%Y%m/%d")
+    return f"app_tubed/{date_sub}/{uuid.uuid4().hex}{ext}"
 
 
 def save_upload(file_bytes: bytes, original_name: str) -> dict:

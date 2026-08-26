@@ -23,7 +23,7 @@ async function remove(id: number) {
 }
 
 async function copy(url: string) {
-  await copyText(location.origin + url)
+  await copyText(url)
   message.success("链接已复制")
 }
 
@@ -85,9 +85,14 @@ onMounted(load)
   height: 138px;
   background: var(--fill);
 }
+.img-thumb :deep(.n-image) {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
 .img-thumb :deep(img) {
   width: 100%;
-  height: 138px;
+  height: 100%;
   object-fit: cover;
   display: block;
 }
