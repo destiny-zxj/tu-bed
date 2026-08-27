@@ -58,6 +58,8 @@ tu-bed/
 ## 快速开始（Docker 部署，推荐）
 
 ```bash
+# 0. 配置 `.env`
+cp .env.example .env
 # 1. 按需修改 docker-compose.yml 中的 SECRET_KEY 和管理员账号
 # 2. 默认使用本地存储（DRIVE=local），无需额外配置；如需七牛云，将 DRIVE 改为 qiniu 并补充 QINIU_* 环境变量（见下方配置说明）
 docker compose up -d --build
