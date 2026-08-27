@@ -65,6 +65,7 @@ docker compose up -d --build
 
 启动后：
 - 前端：`http://<服务器IP>:5173`
+- 管理后台：`http://<服务器IP>:5173/admin`
 - 后端 API：`http://<服务器IP>:8000`
 - 默认管理员账号：`admin` / `admin123456`（请在 `.env` 中修改）
 
