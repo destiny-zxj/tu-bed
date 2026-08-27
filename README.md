@@ -7,7 +7,7 @@
 - **前端**：Vue 3 + TypeScript + Vite + Naive UI + Pinia + Vue Router
 - **后端**：FastAPI (Python) + SQLModel（基于 SQLAlchemy + Pydantic），依赖由 `uv` 管理（Python 3.12）
 - **数据库**：MySQL
-- **存储**：本地文件系统（可按日期分目录）
+- **存储**：七牛云对象存储（Qiniu，按日期分目录）
 
 ## 功能特性
 
@@ -15,45 +15,51 @@
 - 客户端系统：图片上传（点击/拖拽）、我的图片管理、API 密钥管理
 - 管理后台：仪表盘统计、用户管理（增删改、启用/禁用）、全站图片管理
 - REST API：支持 `Bearer Token` 与 `API Key` 两种方式上传，便于第三方集成
+- 图片存储于七牛云对象存储，按 `app_tubed/YYYYMM/DD/` 分目录
 - 一键 Docker 部署
 
 ## 目录结构
 
 ```
 tu-bed/
-├── backend/            # FastAPI 后端 (uv 管理, Python 3.12)
-│   ├── pyproject.toml  # 依赖声明 (uv)
-│   ├── uv.lock         # 锁定依赖版本
-│   ├── app/
-│   │   ├── main.py     # 应用入口、装配模块路由、建表、挂静态、初始化管理员
-│   │   ├── core/        # 公共基础设施
-│   │   │   ├── config.py    # 配置（读取 .env）
-│   │   │   ├── database.py  # 引擎与会话
-│   │   │   ├── security.py  # 密码哈希、JWT、API Key、鉴权依赖
-│   │   │   └── storage.py   # 文件保存、图片尺寸读取
-│   │   └── modules/     # 业务模块 (每个含 views / models / items)
-│   │       ├── auth/    # 认证：User 模型、LoginItem、路由
-│   │       ├── images/  # 图片：Image 模型、ImageListQueryItem、路由
-│   │       ├── apikeys/ # API 密钥：ApiKey 模型、ApiKeyCreateItem、路由
-│   │       └── admin/   # 管理后台：统计/用户/图片管理路由
-│   ├── .env.example
-│   ├── start.sh
-│   └── Dockerfile
-├── frontend/           # Vue3 前端
+├── backend/                 # FastAPI 后端 (uv 管理, Python 3.12)
+│   ├── pyproject.toml       # 依赖声明 (uv)
+│   ├── uv.lock              # 锁定依赖版本
+│   ├── .env.example         # 环境变量示例
+│   ├── start.sh             # 本地开发启动脚本
+│   ├── Dockerfile
+│   └── app/
+│       ├── main.py          # 应用入口、装配模块路由、建表、初始化管理员
+│       ├── core/            # 公共基础设施
+│       │   ├── config.py    # 配置（读取 .env）
+│       │   ├── database.py  # 引擎与会话
+│       │   ├── security.py  # 密码哈希、JWT、API Key、鉴权依赖
+│       │   └── storage.py   # 七牛云对象存储上传/删除
+│       ├── modules/         # 业务模块 (每个含 views / models / items)
+│       │   ├── registry.py  # 集中导入所有模型, 确保建表
+│       │   ├── auth/        # 认证：User 模型、LoginItem、路由
+│       │   ├── images/      # 图片：Image 模型、ImageListQueryItem、路由
+│       │   ├── apikeys/     # API 密钥：ApiKey 模型、ApiKeyCreateItem、路由
+│       │   └── admin/       # 管理后台：统计/用户/图片管理路由
+│       └── uploads/         # 上传文件目录
+├── frontend/                # Vue3 前端
 │   ├── src/
-│   │   ├── api/        # axios 请求封装
-│   │   ├── stores/     # Pinia 状态
-│   │   ├── layouts/    # 客户端 / 管理后台布局
-│   │   ├── views/      # 页面
-│   │   └── router/     # 路由与权限守卫
-│   └── Dockerfile + nginx.conf
-└── docker-compose.yml  # 一键编排（MySQL + 后端 + 前端）
+│   │   ├── api/             # axios 请求封装 (request.ts / index.ts)
+│   │   ├── stores/          # Pinia 状态 (auth.ts)
+│   │   ├── layouts/         # 客户端 / 管理后台布局
+│   │   ├── views/           # 页面 (admin/ 与 client/ 子目录)
+│   │   ├── router/          # 路由与权限守卫
+│   │   └── utils/           # 工具函数 (format.ts)
+│   ├── Dockerfile           # 构建 + nginx 托管
+│   └── nginx.conf           # 静态托管 + /api、/uploads 反向代理
+└── docker-compose.yml       # 一键编排（MySQL + 后端 + 前端）
 ```
 
 ## 快速开始（Docker 部署，推荐）
 
 ```bash
 # 1. 按需修改 docker-compose.yml 中的 SECRET_KEY 和管理员账号
+# 2. 在 docker-compose.yml 的 backend 服务中补充 QINIU_* 环境变量（见下方配置说明）
 docker compose up -d --build
 ```
 
@@ -62,6 +68,8 @@ docker compose up -d --build
 - 后端 API：`http://<服务器IP>:8000`
 - 默认管理员账号：`admin` / `admin123456`（请在 `.env` 中修改）
 
+> 注意：图片存储依赖七牛云，部署前需在 `docker-compose.yml` 的 `backend` 服务中配置 `QINIU_ACCESS_KEY`、`QINIU_SECRET_KEY`、`QINIU_BUCKET`、`QINIU_DOMAIN`，否则上传接口会报"七牛云存储未正确配置"。
+
 ## 本地开发
 
 ### 后端
@@ -69,7 +77,7 @@ docker compose up -d --build
 ```bash
 cd backend
 uv sync                # 创建 .venv (Python 3.12) 并安装依赖
-cp .env.example .env   # 修改数据库连接等信息
+cp .env.example .env   # 修改数据库连接、七牛云配置等信息
 # 确保本地有 MySQL，并创建数据库 tubed
 uv run uvicorn app.main:app --reload   # 或 uv run python -m app.main
 ```
@@ -78,14 +86,15 @@ uv run uvicorn app.main:app --reload   # 或 uv run python -m app.main
 
 ```bash
 cd frontend
-npm install
-npm run dev            # 默认 http://localhost:5173，代理 /api 到 :8000
+npm install            # 或 yarn
+npm run dev            # 默认 http://localhost:5173，代理 /api、/uploads 到 :8000
 ```
 
 ## API 概览
 
 | 方法 | 路径 | 说明 | 鉴权 |
 | --- | --- | --- | --- |
+| GET | `/api/health` | 健康检查 | 公开 |
 | POST | `/api/auth/login` | 用户名密码登录 | 公开 |
 | GET | `/api/auth/me` | 获取当前用户 | Token |
 | POST | `/api/images/upload` | 上传图片（支持 `api_key` 参数） | Token / Key |
@@ -105,7 +114,7 @@ curl -X POST "http://<host>:8000/api/images/upload?api_key=YOUR_KEY" \
   -F "file=@/path/to/image.png"
 ```
 
-返回结果中的 `url` 即为图片公开访问地址。
+返回结果中的 `url` 即为图片公开访问地址（七牛云外链）。
 
 ## 配置说明（`.env`）
 
@@ -116,5 +125,9 @@ curl -X POST "http://<host>:8000/api/images/upload?api_key=YOUR_KEY" \
 | `UPLOAD_DIR` | 上传文件保存目录 |
 | `MAX_UPLOAD_SIZE_MB` | 单文件最大体积 |
 | `ALLOWED_EXTENSIONS` | 允许的文件扩展名 |
-| `PUBLIC_BASE_URL` | 图片公开访问前缀（部署时改为域名前缀） |
+| `PUBLIC_BASE_URL` | 图片公开访问前缀 |
+| `QINIU_ACCESS_KEY` | 七牛云 AccessKey（获取地址：七牛控制台） |
+| `QINIU_SECRET_KEY` | 七牛云 SecretKey |
+| `QINIU_BUCKET` | 七牛云空间名称 |
+| `QINIU_DOMAIN` | 七牛云外链域名（无需结尾斜杠） |
 | `ADMIN_USERNAME/PASSWORD/EMAIL` | 初始管理员（首次启动自动创建） |
