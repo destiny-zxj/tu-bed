@@ -3,3 +3,4 @@ from app.modules.admin import models as _admin_models  # noqa: F401
 from app.modules.apikeys import models as _apikeys_models  # noqa: F401
 from app.modules.auth import models as _auth_models  # noqa: F401
 from app.modules.images import models as _images_models  # noqa: F401
+from app.modules.tags import models as _tags_models  # noqa: F401

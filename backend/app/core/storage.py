@@ -13,10 +13,11 @@ def is_allowed_extension(filename: str) -> bool:
     return ext in settings.allowed_extensions
 
 
-def _make_key(original_name: str) -> str:
+def _make_key(original_name: str, username: str = "") -> str:
     ext = os.path.splitext(original_name)[1].lower()
     date_sub = datetime.now().strftime("%Y%m/%d")
-    return f"app_tubed/{date_sub}/{uuid.uuid4().hex}{ext}"
+    safe_user = (username or "anonymous").strip().replace("/", "_") or "anonymous"
+    return f"app_tubed/{safe_user}/{date_sub}/{uuid.uuid4().hex}{ext}"
 
 
 def _read_image_size(file_bytes: bytes) -> tuple:
@@ -29,6 +30,15 @@ def _read_image_size(file_bytes: bytes) -> tuple:
     return width, height
 
 
+def _s3_configured() -> bool:
+    return bool(
+        settings.s3_endpoint_url
+        and settings.s3_access_key
+        and settings.s3_secret_key
+        and settings.s3_bucket
+    )
+
+
 def _qiniu_configured() -> bool:
     return bool(
         settings.qiniu_access_key
@@ -38,12 +48,12 @@ def _qiniu_configured() -> bool:
     )
 
 
-def _save_local(file_bytes: bytes, original_name: str) -> dict:
+def _save_local(file_bytes: bytes, original_name: str, username: str = "") -> dict:
     """保存文件到本地磁盘, 返回文件元信息字典。
 
     storage_path / filename 字段为相对 upload_dir 的路径, url 为本地访问地址。
     """
-    key = _make_key(original_name)
+    key = _make_key(original_name, username)
     abs_path = os.path.join(settings.upload_dir, key)
     os.makedirs(os.path.dirname(abs_path), exist_ok=True)
     with open(abs_path, "wb") as f:
@@ -63,7 +73,7 @@ def _save_local(file_bytes: bytes, original_name: str) -> dict:
     }
 
 
-def _save_qiniu(file_bytes: bytes, original_name: str) -> dict:
+def _save_qiniu(file_bytes: bytes, original_name: str, username: str = "") -> dict:
     """上传文件到七牛云对象存储, 返回文件元信息字典。
 
     storage_path / filename 字段为七牛对象 key, url 为七牛外链。
@@ -73,7 +83,7 @@ def _save_qiniu(file_bytes: bytes, original_name: str) -> dict:
     if not _qiniu_configured():
         raise ValueError("七牛云存储未正确配置 (请检查 QINIU_* 环境变量)")
 
-    key = _make_key(original_name)
+    key = _make_key(original_name, username)
     auth = Auth(settings.qiniu_access_key, settings.qiniu_secret_key)
     token = auth.upload_token(settings.qiniu_bucket, key, 3600)
     ret, info = put_data(token, key, file_bytes)
@@ -95,15 +105,70 @@ def _save_qiniu(file_bytes: bytes, original_name: str) -> dict:
     }
 
 
-def save_upload(file_bytes: bytes, original_name: str) -> dict:
-    """根据 DRIVE 配置选择本地或七牛云存储, 返回文件元信息字典。"""
+def _save_s3(file_bytes: bytes, original_name: str, username: str = "") -> dict:
+    """上传文件到 S3 兼容对象存储, 返回文件元信息字典。
+
+    storage_path / filename 字段为 S3 对象 key, url 为对象外链。
+    """
+    import boto3
+    import mimetypes
+    from botocore.exceptions import ClientError, BotoCoreError
+
+    if not _s3_configured():
+        raise ValueError("S3 存储未正确配置 (请检查 S3_* 环境变量)")
+
+    key = _make_key(original_name, username)
+    content_type, _ = mimetypes.guess_type(original_name)
+    if not content_type:
+        content_type = "application/octet-stream"
+
+    client = boto3.client(
+        "s3",
+        endpoint_url=settings.s3_endpoint_url or None,
+        region_name=settings.s3_region_name or None,
+        aws_access_key_id=settings.s3_access_key,
+        aws_secret_access_key=settings.s3_secret_key,
+    )
+    try:
+        client.put_object(
+            Bucket=settings.s3_bucket,
+            Key=key,
+            Body=file_bytes,
+            ContentType=content_type,
+        )
+    except (ClientError, BotoCoreError) as e:
+        raise ValueError(f"上传到 S3 失败: {e}")
+
+    if settings.s3_public_domain:
+        url = f"{settings.s3_public_domain.rstrip('/')}/{key}"
+    else:
+        endpoint = settings.s3_endpoint_url.rstrip("/")
+        url = f"{endpoint}/{settings.s3_bucket}/{key}"
+    width, height = _read_image_size(file_bytes)
+
+    return {
+        "filename": key,
+        "original_name": original_name,
+        "storage_path": key,
+        "rel_path": key,
+        "url": url,
+        "width": width,
+        "height": height,
+    }
+
+
+def save_upload(file_bytes: bytes, original_name: str, username: str = "") -> dict:
+    """根据 DRIVE 配置选择本地 / 七牛云 / S3 存储, 返回文件元信息字典。"""
     ext = os.path.splitext(original_name)[1].lower()
     if ext not in settings.allowed_extensions:
         raise ValueError("不支持的文件格式")
 
-    if settings.drive == "qiniu":
-        return _save_qiniu(file_bytes, original_name)
-    return _save_local(file_bytes, original_name)
+    drive = settings.drive
+    if drive == "qiniu":
+        return _save_qiniu(file_bytes, original_name, username)
+    if drive == "s3":
+        return _save_s3(file_bytes, original_name, username)
+    return _save_local(file_bytes, original_name, username)
 
 
 def _delete_local(key: str) -> None:
@@ -133,9 +198,33 @@ def _delete_qiniu(key: str) -> None:
     bucket.delete(settings.qiniu_bucket, key)
 
 
+def _delete_s3(key: str) -> None:
+    """从 S3 兼容对象存储删除指定对象 key。"""
+    import boto3
+    from botocore.exceptions import ClientError, BotoCoreError
+
+    if not key or not _s3_configured():
+        return
+    client = boto3.client(
+        "s3",
+        endpoint_url=settings.s3_endpoint_url or None,
+        region_name=settings.s3_region_name or None,
+        aws_access_key_id=settings.s3_access_key,
+        aws_secret_access_key=settings.s3_secret_key,
+    )
+    try:
+        client.delete_object(Bucket=settings.s3_bucket, Key=key)
+    except (ClientError, BotoCoreError):
+        # 仅做尽力删除, 忽略错误
+        pass
+
+
 def delete_file(key: str) -> None:
-    """根据 DRIVE 配置删除本地文件或七牛云对象。"""
-    if settings.drive == "qiniu":
+    """根据 DRIVE 配置删除本地文件 / 七牛云对象 / S3 对象。"""
+    drive = settings.drive
+    if drive == "qiniu":
         _delete_qiniu(key)
+    elif drive == "s3":
+        _delete_s3(key)
     else:
         _delete_local(key)

@@ -3,6 +3,8 @@ from typing import Optional
 
 from sqlmodel import Field, Relationship, SQLModel
 
+from app.modules.tags.models import ImageTag, TagBrief  # noqa: F401
+
 
 def utcnow() -> datetime:
     return datetime.now(timezone.utc)
@@ -24,11 +26,13 @@ class Image(SQLModel, table=True):
     created_at: datetime = Field(default_factory=utcnow)
 
     owner: Optional["User"] = Relationship(back_populates="images")
+    tags: list["Tag"] = Relationship(back_populates="images", link_model=ImageTag)
 
 
 class ImagePublic(SQLModel):
     id: int
     owner_id: int
+    owner_username: Optional[str] = None
     url: str
     original_name: str
     mime_type: str
@@ -36,3 +40,4 @@ class ImagePublic(SQLModel):
     width: Optional[int] = None
     height: Optional[int] = None
     created_at: datetime
+    tags: list[TagBrief] = []

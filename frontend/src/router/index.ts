@@ -18,6 +18,7 @@ const router = createRouter({
       children: [
         { path: "", name: "client-home", component: () => import("@/views/client/UploadView.vue") },
         { path: "images", name: "client-images", component: () => import("@/views/client/MyImagesView.vue") },
+        { path: "tags", name: "client-tags", component: () => import("@/views/client/MyTagsView.vue") },
       ],
     },
     {

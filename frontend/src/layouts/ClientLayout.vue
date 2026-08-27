@@ -4,7 +4,7 @@ import { useMessage, NLayout, NLayoutHeader, NMenu, NAvatar, NText, NIcon } from
 import type { MenuOption } from "naive-ui"
 import { computed, ref, onMounted, onBeforeUnmount, h } from "vue"
 import { useAuthStore } from "@/stores/auth"
-import { CloudUploadOutline, ImageOutline } from "@vicons/ionicons5"
+import { CloudUploadOutline, ImageOutline, PricetagsOutline } from "@vicons/ionicons5"
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -13,11 +13,13 @@ const message = useMessage()
 const menuOptions: MenuOption[] = [
   { label: "上传", key: "/app", icon: () => h(NIcon, null, { default: () => h(CloudUploadOutline) }) },
   { label: "我的图片", key: "/app/images", icon: () => h(NIcon, null, { default: () => h(ImageOutline) }) },
+  { label: "我的标签", key: "/app/tags", icon: () => h(NIcon, null, { default: () => h(PricetagsOutline) }) },
 ]
 
 const activeKey = computed(() => {
   const p = router.currentRoute.value.path
   if (p.startsWith("/app/images")) return "/app/images"
+  if (p.startsWith("/app/tags")) return "/app/tags"
   return "/app"
 })
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { h, onMounted, ref } from "vue"
-import { NAlert, NButton, NCard, NDataTable, NForm, NFormItem, NInput, NModal, NSpace, NTag, useDialog, useMessage } from "naive-ui"
-import type { DataTableColumns } from "naive-ui"
+import { NAlert, NButton, NCard, NDataTable, NForm, NFormItem, NInput, NModal, NSpace, NTag, useDialog, useMessage, NPagination, NSelect, NText } from "naive-ui"
+import type { DataTableColumns, SelectOption } from "naive-ui"
 import api, { type ApiKey, type ApiKeyCreated } from "@/api"
 import { copyText, formatDate } from "@/utils/format"
 
@@ -10,6 +10,9 @@ const dialog = useDialog()
 
 const keys = ref<ApiKey[]>([])
 const loading = ref(false)
+const total = ref(0)
+const page = ref(1)
+const pageSize = ref(20)
 
 const showCreate = ref(false)
 const creating = ref(false)
@@ -18,14 +21,32 @@ const newName = ref("")
 const createdKey = ref<ApiKeyCreated | null>(null)
 const createdKeyVisible = ref(false)
 
+const pageSizeOptions: SelectOption[] = [
+  { label: "10 条/页", value: 10 },
+  { label: "20 条/页", value: 20 },
+  { label: "30 条/页", value: 30 },
+]
+
 async function load() {
   loading.value = true
   try {
-    const { data } = await api.listApiKeys()
-    keys.value = data
+    const { data } = await api.listApiKeys(page.value, pageSize.value)
+    keys.value = data.items
+    total.value = data.total
   } finally {
     loading.value = false
   }
+}
+
+function changePage(p: number) {
+  page.value = p
+  load()
+}
+
+function changePageSize(size: number) {
+  pageSize.value = size
+  page.value = 1
+  load()
 }
 
 async function create() {
@@ -63,6 +84,9 @@ function remove(row: ApiKey) {
     onPositiveClick: async () => {
       await api.deleteApiKey(row.id)
       message.success("已删除")
+      if (keys.value.length === 1 && page.value > 1) {
+        page.value -= 1
+      }
       await load()
     },
   })
@@ -114,6 +138,11 @@ onMounted(load)
 
 <template>
   <div class="apikeys-page">
+    <div class="page-head" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px">
+      <div class="app-title">API Keys 管理</div>
+      <n-button type="primary" class="press" @click="showCreate = true">新建 API Key</n-button>
+    </div>
+
     <n-alert type="info" :show-icon="false" class="keys-tip" :bordered="false">
       <div class="tip-text">
         API Key 用于无登录态上传图片，可配合 curl 或第三方工具使用：
@@ -121,11 +150,27 @@ onMounted(load)
       </div>
     </n-alert>
 
-    <n-card class="app-card" title="API Keys 管理" :bordered="false">
-      <template #header-extra>
-        <n-button type="primary" class="press" @click="showCreate = true">新建 API Key</n-button>
-      </template>
+    <n-card class="app-card" :bordered="false">
       <n-data-table :columns="columns()" :data="keys" :loading="loading" :bordered="false" />
+      <div class="table-footer">
+        <n-text depth="3" class="total-text">共 {{ total }} 条</n-text>
+        <div class="pager">
+          <n-select
+            :value="pageSize"
+            :options="pageSizeOptions"
+            size="small"
+            style="width: 110px"
+            @update:value="changePageSize"
+          />
+          <n-pagination
+            v-model:page="page"
+            :page-size="pageSize"
+            :item-count="total"
+            show-quick-jumper
+            @update:page="changePage"
+          />
+        </div>
+      </div>
     </n-card>
 
     <n-modal v-model:show="showCreate" title="新建 API Key" preset="card" style="width: 420px">
@@ -197,5 +242,21 @@ onMounted(load)
 .key-actions {
   display: flex;
   justify-content: flex-end;
+}
+.table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+.total-text {
+  font-size: 13px;
+}
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 </style>

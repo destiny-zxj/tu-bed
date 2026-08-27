@@ -3,19 +3,33 @@ from sqlmodel import Session
 
 from app.core.database import get_db
 from app.core.security import generate_api_key, get_current_user
-from app.modules.apikeys.items import ApiKeyCreateItem
+from app.modules.apikeys.items import ApiKeyCreateItem, ApiKeyListQueryItem
 from app.modules.apikeys.models import ApiKey, ApiKeyCreated, ApiKeyPublic
 from app.modules.auth.models import User
 
 router = APIRouter(prefix="/api/apikeys", tags=["apikeys"])
 
 
-@router.get("", response_model=list[ApiKeyPublic])
+@router.get("", response_model=dict)
 def list_api_keys(
+    query: ApiKeyListQueryItem = Depends(),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    return db.query(ApiKey).filter(ApiKey.owner_id == current_user.id).all()
+    page = max(1, query.page)
+    page_size = min(max(1, query.page_size), 100)
+    q = db.query(ApiKey).filter(ApiKey.owner_id == current_user.id)
+    total = q.count()
+    items = (
+        q.order_by(ApiKey.created_at.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+    return {
+        "total": total,
+        "items": [ApiKeyPublic.model_validate(i) for i in items],
+    }
 
 
 @router.post("", response_model=ApiKeyCreated)

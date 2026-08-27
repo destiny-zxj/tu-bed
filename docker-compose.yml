@@ -23,9 +23,21 @@ services:
     environment:
       DATABASE_URL: mysql+pymysql://root:root@db:3306/tubed
       SECRET_KEY: please-change-this-to-a-long-random-string
-      # 存储驱动: local (本地磁盘) 或 qiniu (七牛云对象存储), 默认 local
+      # 存储驱动: local (本地磁盘) / qiniu (七牛云对象存储) / s3 (S3 兼容对象存储), 默认 local
       DRIVE: local
       PUBLIC_BASE_URL: /uploads
+      # 七牛云对象存储 (DRIVE=qiniu 时生效)
+      QINIU_ACCESS_KEY:
+      QINIU_SECRET_KEY:
+      QINIU_BUCKET:
+      QINIU_DOMAIN:
+      # S3 兼容对象存储 (DRIVE=s3 时生效)
+      S3_ENDPOINT_URL:
+      S3_REGION_NAME:
+      S3_ACCESS_KEY:
+      S3_SECRET_KEY:
+      S3_BUCKET:
+      S3_PUBLIC_DOMAIN:
       ADMIN_USERNAME: admin
       ADMIN_PASSWORD: admin123456
     ports:

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router"
-import { NLayout, NLayoutSider, NLayoutHeader, NLayoutContent, NMenu, NAvatar, NText, NIcon } from "naive-ui"
+import { NLayout, NLayoutSider, NLayoutContent, NMenu, NAvatar, NText, NIcon } from "naive-ui"
 import type { MenuOption } from "naive-ui"
 import { h, computed, ref, onMounted, onBeforeUnmount } from "vue"
 import { useAuthStore } from "@/stores/auth"
@@ -93,9 +93,6 @@ onBeforeUnmount(() => document.removeEventListener("click", onClickOutside))
     </n-layout-sider>
 
     <n-layout>
-      <n-layout-header class="admin-header glass">
-        <span class="app-subtitle">管理后台</span>
-      </n-layout-header>
       <n-layout-content class="admin-content">
         <div class="admin-body">
           <router-view v-slot="{ Component }">
@@ -240,19 +237,12 @@ onBeforeUnmount(() => document.removeEventListener("click", onClickOutside))
   right: auto;
   transform: none;
 }
-.admin-header {
-  height: 56px;
-  display: flex;
-  align-items: center;
-  padding: 0 24px;
-  border-bottom: 1px solid var(--separator);
-}
 .admin-content {
   background: transparent;
 }
 .admin-body {
-  padding: 26px 24px 60px;
-  min-height: calc(100vh - 56px);
+  padding: 26px 24px 30px;
+  min-height: 100vh;
 }
 .sider-name {
   white-space: nowrap;

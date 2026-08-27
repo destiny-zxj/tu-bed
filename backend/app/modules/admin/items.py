@@ -16,3 +16,12 @@ class UserUpdateItem(SQLModel):
     password: Optional[str] = None
     is_active: Optional[bool] = None
     is_admin: Optional[bool] = None
+
+
+class UserListQueryItem(SQLModel):
+    page: int = 1
+    page_size: int = 20
+
+
+class ImageBatchDeleteItem(SQLModel):
+    image_ids: list[int]

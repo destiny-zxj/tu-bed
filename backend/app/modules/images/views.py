@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from sqlalchemy.orm import selectinload
 from sqlmodel import Session
 
 from app.core.database import get_db
@@ -12,6 +13,7 @@ from app.modules.auth.models import User
 from app.modules.apikeys.models import ApiKey
 from app.modules.images.items import ImageListQueryItem
 from app.modules.images.models import Image, ImagePublic
+from app.modules.tags.models import ImageTag
 
 router = APIRouter(prefix="/api/images", tags=["images"])
 
@@ -57,7 +59,7 @@ async def upload_image(
 
     content = await file.read()
     try:
-        meta = save_upload(content, file.filename or "upload.bin")
+        meta = save_upload(content, file.filename or "upload.bin", uploader.username)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
@@ -87,14 +89,20 @@ def list_images(
     page = max(1, query.page)
     page_size = min(max(1, query.page_size), 100)
     q = db.query(Image).filter(Image.owner_id == current_user.id)
+    if query.tag_id is not None:
+        q = q.join(ImageTag, ImageTag.image_id == Image.id).filter(ImageTag.tag_id == query.tag_id)
     total = q.count()
     items = (
-        q.order_by(Image.created_at.desc())
+        q.options(selectinload(Image.tags))
+        .order_by(Image.created_at.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)
         .all()
     )
-    return {"total": total, "items": items}  # type: ignore[arg-type]
+    return {
+        "total": total,
+        "items": [ImagePublic.model_validate(i) for i in items],
+    }
 
 
 @router.delete("/{image_id}", status_code=status.HTTP_204_NO_CONTENT)

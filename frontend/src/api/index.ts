@@ -9,9 +9,22 @@ export interface User {
   created_at: string
 }
 
+export interface TagBrief {
+  id: number
+  name: string
+}
+
+export interface Tag {
+  id: number
+  name: string
+  image_count: number
+  created_at: string
+}
+
 export interface Image {
   id: number
   owner_id: number
+  owner_username?: string | null
   url: string
   original_name: string
   mime_type: string
@@ -19,11 +32,17 @@ export interface Image {
   width?: number
   height?: number
   created_at: string
+  tags: TagBrief[]
 }
 
 export interface ImageList {
   total: number
   items: Image[]
+}
+
+export interface PagedList<T> {
+  total: number
+  items: T[]
 }
 
 export interface Stats {
@@ -50,8 +69,10 @@ const api = {
     request.post<{ access_token: string }>("/auth/login", { username, password }),
   me: () => request.get<User>("/auth/me"),
 
-  listImages: (page = 1, pageSize = 20) =>
-    request.get<ImageList>("/images", { params: { page, page_size: pageSize } }),
+  listImages: (page = 1, pageSize = 20, tagId?: number) =>
+    request.get<ImageList>("/images", {
+      params: { page, page_size: pageSize, tag_id: tagId },
+    }),
   uploadImage: (file: File, apiKey?: string) => {
     const form = new FormData()
     form.append("file", file)
@@ -61,22 +82,37 @@ const api = {
   },
   deleteImage: (id: number) => request.delete(`/images/${id}`),
 
+  // tags
+  listTags: () => request.get<Tag[]>("/tags"),
+  createTag: (name: string) => request.post<Tag>("/tags", { name }),
+  renameTag: (id: number, name: string) => request.put<Tag>(`/tags/${id}`, { name }),
+  deleteTag: (id: number) => request.delete(`/tags/${id}`),
+  listImageTags: (imageId: number) => request.get<TagBrief[]>(`/images/${imageId}/tags`),
+  setImageTags: (imageId: number, tagIds: number[]) =>
+    request.put<TagBrief[]>(`/images/${imageId}/tags`, { tag_ids: tagIds }),
+
   // api keys
-  listApiKeys: () => request.get<ApiKey[]>("/apikeys"),
+  listApiKeys: (page = 1, pageSize = 20) =>
+    request.get<PagedList<ApiKey>>("/apikeys", { params: { page, page_size: pageSize } }),
   createApiKey: (name: string) => request.post<ApiKeyCreated>("/apikeys", { name }),
   deleteApiKey: (id: number) => request.delete(`/apikeys/${id}`),
 
   // admin
   adminStats: () => request.get<Stats>("/admin/stats"),
-  adminListUsers: () => request.get<User[]>("/admin/users"),
+  adminListUsers: (page = 1, pageSize = 20) =>
+    request.get<PagedList<User>>("/admin/users", { params: { page, page_size: pageSize } }),
   adminCreateUser: (data: { username: string; email?: string; password: string; is_admin: boolean }) =>
     request.post<User>("/admin/users", data),
   adminUpdateUser: (id: number, data: Record<string, unknown>) =>
     request.put<User>(`/admin/users/${id}`, data),
   adminDeleteUser: (id: number) => request.delete(`/admin/users/${id}`),
-  adminListImages: (page = 1, pageSize = 20) =>
-    request.get<ImageList>("/admin/images", { params: { page, page_size: pageSize } }),
+  adminListImages: (page = 1, pageSize = 20, params: Record<string, unknown> = {}) =>
+    request.get<ImageList>("/admin/images", { params: { page, page_size: pageSize, ...params } }),
   adminDeleteImage: (id: number) => request.delete(`/admin/images/${id}`),
+  adminBatchDeleteImages: (ids: number[]) =>
+    request.post<{ deleted: number; skipped: number; missing_ids: number[] }>("/admin/images/batch-delete", {
+      image_ids: ids,
+    }),
 }
 
 export default api

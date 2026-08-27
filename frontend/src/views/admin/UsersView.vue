@@ -1,20 +1,47 @@
 <script setup lang="ts">
 import { h, onMounted, ref } from "vue"
-import { useMessage, NCard, NSpace, NDataTable, NButton, NModal, NForm, NFormItem, NInput, NRadioGroup, NRadioButton, useDialog, NTag } from "naive-ui"
-import type { DataTableColumns } from "naive-ui"
+import { useMessage, NCard, NSpace, NDataTable, NButton, NModal, NForm, NFormItem, NInput, NRadioGroup, NRadioButton, useDialog, NTag, NPagination, NSelect, NText } from "naive-ui"
+import type { DataTableColumns, SelectOption } from "naive-ui"
 import api, { type User } from "@/api"
 import { formatDate } from "@/utils/format"
 
 const message = useMessage()
 const dialog = useDialog()
 const users = ref<User[]>([])
+const loading = ref(false)
+const total = ref(0)
+const page = ref(1)
+const pageSize = ref(20)
 const showCreate = ref(false)
 const form = ref({ username: "", email: "", password: "", is_admin: false })
 const creating = ref(false)
 
+const pageSizeOptions: SelectOption[] = [
+  { label: "10 条/页", value: 10 },
+  { label: "20 条/页", value: 20 },
+  { label: "30 条/页", value: 30 },
+]
+
 async function load() {
-  const { data } = await api.adminListUsers()
-  users.value = data
+  loading.value = true
+  try {
+    const { data } = await api.adminListUsers(page.value, pageSize.value)
+    users.value = data.items
+    total.value = data.total
+  } finally {
+    loading.value = false
+  }
+}
+
+function changePage(p: number) {
+  page.value = p
+  load()
+}
+
+function changePageSize(size: number) {
+  pageSize.value = size
+  page.value = 1
+  load()
 }
 
 async function create() {
@@ -44,6 +71,10 @@ function remove(row: User) {
     onPositiveClick: async () => {
       await api.adminDeleteUser(row.id)
       message.success("已删除")
+      // 删除后若当前页为空则回退一页
+      if (users.value.length === 1 && page.value > 1) {
+        page.value -= 1
+      }
       await load()
     },
   })
@@ -96,11 +127,33 @@ onMounted(load)
 </script>
 
 <template>
-  <n-card class="app-card" title="用户管理" :bordered="false">
-    <template #header-extra>
+  <div>
+    <div class="page-head" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px">
+      <div class="app-title">用户管理</div>
       <n-button type="primary" class="press" @click="showCreate = true">新建用户</n-button>
-    </template>
-    <n-data-table :columns="columns()" :data="users" :bordered="false" />
+    </div>
+    <n-card class="app-card" :bordered="false">
+      <n-data-table :columns="columns()" :data="users" :loading="loading" :bordered="false" />
+      <div class="table-footer">
+        <n-text depth="3" class="total-text">共 {{ total }} 条</n-text>
+        <div class="pager">
+          <n-select
+            :value="pageSize"
+            :options="pageSizeOptions"
+            size="small"
+            style="width: 110px"
+            @update:value="changePageSize"
+          />
+          <n-pagination
+            v-model:page="page"
+            :page-size="pageSize"
+            :item-count="total"
+            show-quick-jumper
+            @update:page="changePage"
+          />
+        </div>
+      </div>
+    </n-card>
     <n-modal v-model:show="showCreate" title="新建用户" preset="card" style="width: 420px">
     <n-form @submit.prevent="create">
       <n-form-item label="用户名">
@@ -125,5 +178,24 @@ onMounted(load)
       </n-button>
     </n-form>
     </n-modal>
-  </n-card>
+  </div>
 </template>
+
+<style scoped>
+.table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+.total-text {
+  font-size: 13px;
+}
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+</style>
