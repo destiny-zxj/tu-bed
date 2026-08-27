@@ -194,8 +194,8 @@ const columns = computed<DataTableColumns<Image>>(() => [
   {
     title: "文件名",
     key: "original_name",
-    width: 300,
-    maxWidth: 300,
+    width: 240,
+    maxWidth: 240,
     ellipsis: { tooltip: true },
     render: (row) => row.original_name,
   },
