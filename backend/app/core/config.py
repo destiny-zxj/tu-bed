@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     allowed_extensions: List[str] = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"]
     public_base_url: str = "/uploads"
 
+    # 存储驱动: local (本地磁盘) 或 qiniu (七牛云对象存储), 默认 local
+    drive: str = "local"
+
     # 七牛云对象存储配置
     qiniu_access_key: str = ""
     qiniu_secret_key: str = ""

@@ -2,6 +2,7 @@ import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlmodel import SQLModel
 
 from app.core.config import settings
@@ -27,6 +28,11 @@ app.include_router(auth_router)
 app.include_router(images_router)
 app.include_router(apikeys_router)
 app.include_router(admin_router)
+
+# 本地存储时, 将上传目录挂载为静态文件服务, 供 /uploads 路径访问
+if settings.drive == "local":
+    os.makedirs(settings.upload_dir, exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory=settings.upload_dir), name="uploads")
 
 
 @app.get("/api/health")

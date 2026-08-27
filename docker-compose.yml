@@ -23,6 +23,8 @@ services:
     environment:
       DATABASE_URL: mysql+pymysql://root:root@db:3306/tubed
       SECRET_KEY: please-change-this-to-a-long-random-string
+      # 存储驱动: local (本地磁盘) 或 qiniu (七牛云对象存储), 默认 local
+      DRIVE: local
       PUBLIC_BASE_URL: /uploads
       ADMIN_USERNAME: admin
       ADMIN_PASSWORD: admin123456
