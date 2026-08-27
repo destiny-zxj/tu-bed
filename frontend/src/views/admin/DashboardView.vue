@@ -27,12 +27,11 @@ const tiles = [
           <n-icon :component="t.icon" :size="22" />
         </div>
         <div class="stat-label app-caption">{{ t.label }}</div>
-        <div class="stat-value">
+        <div class="stat-value" style="font-weight: 700">
           <n-number-animation
             v-if="i < 2"
             :from="0"
             :to="(stats as any)[i === 0 ? 'total_users' : 'total_images']"
-            style="font-weight: 700"
           />
           <template v-else>{{ formatSize(stats.total_storage_bytes) }}</template>
         </div>
