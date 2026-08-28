@@ -1,34 +1,83 @@
 <script setup lang="ts">
 import { ref } from "vue"
-import { useMessage, NCard, NUpload, NUploadDragger, NText, NP, NImage, NButton, NEmpty, NIcon } from "naive-ui"
+import { useMessage, NCard, NUpload, NUploadDragger, NText, NP, NImage, NButton, NEmpty, NIcon, NProgress } from "naive-ui"
 import type { UploadCustomRequestOptions } from "naive-ui"
-import { CloudUploadOutline } from "@vicons/ionicons5"
+import { CloudUploadOutline, CloseOutline } from "@vicons/ionicons5"
 import api, { type Image } from "@/api"
 import { copyText, formatSize } from "@/utils/format"
 
 const message = useMessage()
 const recent = ref<Image[]>([])
-const uploading = ref(false)
 const dragOver = ref(false)
 
-const customRequest = async (options: UploadCustomRequestOptions) => {
+interface UploadTask {
+  id: string
+  name: string
+  size: number
+  percent: number
+  status: "uploading" | "error"
+  controller?: AbortController
+  errorMsg?: string
+}
+const tasks = ref<UploadTask[]>([])
+// 保留原始 File 以便失败后可重试
+const taskFiles = new Map<string, File>()
+
+const customRequest = (options: UploadCustomRequestOptions) => {
   const file = options.file.file as File
   if (!file) {
     options.onError()
     return
   }
-  uploading.value = true
+  const task: UploadTask = {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    name: file.name,
+    size: file.size,
+    percent: 0,
+    status: "uploading",
+    controller: new AbortController(),
+  }
+  taskFiles.set(task.id, file)
+  tasks.value.unshift(task)
+  runUpload(task, options)
+}
+
+async function runUpload(task: UploadTask, options?: UploadCustomRequestOptions) {
+  const file = taskFiles.get(task.id)
+  if (!file) return
+  task.status = "uploading"
+  task.percent = 0
+  task.errorMsg = undefined
+  task.controller = new AbortController()
   try {
-    const { data } = await api.uploadImage(file)
+    const { data } = await api.uploadImage(file, {
+      signal: task.controller.signal,
+      onProgress: (percent) => {
+        task.percent = percent
+      },
+    })
+    task.percent = 100
+    tasks.value = tasks.value.filter((t) => t.id !== task.id)
+    taskFiles.delete(task.id)
     recent.value.unshift(data)
     message.success("上传成功")
-    options.onFinish()
+    options?.onFinish()
   } catch (e: any) {
-    message.error(e?.response?.data?.detail || "上传失败")
-    options.onError()
-  } finally {
-    uploading.value = false
+    if (task.controller.signal.aborted) {
+      tasks.value = tasks.value.filter((t) => t.id !== task.id)
+      taskFiles.delete(task.id)
+      options?.onError()
+      return
+    }
+    task.status = "error"
+    task.errorMsg = e?.response?.data?.detail || "上传失败"
+    message.error(task.errorMsg)
+    options?.onError()
   }
+}
+
+function cancelTask(task: UploadTask) {
+  task.controller?.abort()
 }
 
 async function copyUrl(url: string) {
@@ -63,8 +112,55 @@ async function copyUrl(url: string) {
     </n-card>
 
     <n-card class="app-card" title="最近上传" :bordered="false">
-      <n-empty v-if="!recent.length" description="还没有上传记录" />
+      <n-empty v-if="!recent.length && !tasks.length" description="还没有上传记录" />
       <div v-else class="img-grid">
+        <div
+          v-for="task in tasks"
+          :key="task.id"
+          class="img-tile img-tile--task"
+          :class="{ 'img-tile--error': task.status === 'error' }"
+        >
+          <div class="img-thumb task-thumb">
+            <n-progress
+              type="circle"
+              :percentage="task.percent"
+              :show-indicator="task.status === 'uploading'"
+              :status="task.status === 'error' ? 'error' : 'default'"
+              :size="56"
+            />
+          </div>
+          <div class="img-meta">
+            <n-text :ellipsis="true" style="max-width: 100%; font-weight: 600; font-size: 13px">
+              {{ task.name }}
+            </n-text>
+            <n-text depth="3" style="font-size: 12px">
+              {{ task.status === "error" ? task.errorMsg || "上传失败" : `${task.percent}% · ${formatSize(task.size)}` }}
+            </n-text>
+            <div class="task-actions">
+              <n-button
+                v-if="task.status === 'uploading'"
+                size="small"
+                block
+                tertiary
+                type="error"
+                @click="cancelTask(task)"
+              >
+                <template #icon><n-icon><CloseOutline /></n-icon></template>
+                取消
+              </n-button>
+              <n-button
+                v-else
+                size="small"
+                block
+                tertiary
+                type="primary"
+                @click="runUpload(task)"
+              >
+                重试
+              </n-button>
+            </div>
+          </div>
+        </div>
         <div v-for="img in recent" :key="img.id" class="img-tile press">
           <div class="img-thumb">
             <n-image :src="img.url" object-fit="cover" />
@@ -150,6 +246,20 @@ async function copyUrl(url: string) {
   padding: 10px 12px 12px;
 }
 .copy-btn {
+  margin-top: 4px;
+}
+.img-tile--task {
+  cursor: default;
+}
+.img-tile--error {
+  border-color: var(--error, #d03050);
+}
+.task-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.task-actions {
   margin-top: 4px;
 }
 </style>

@@ -73,11 +73,26 @@ const api = {
     request.get<ImageList>("/images", {
       params: { page, page_size: pageSize, tag_id: tagId },
     }),
-  uploadImage: (file: File, apiKey?: string) => {
+  uploadImage: (
+    file: File,
+    options?: {
+      apiKey?: string
+      onProgress?: (percent: number) => void
+      signal?: AbortSignal
+    },
+  ) => {
     const form = new FormData()
     form.append("file", file)
     return request.post<Image>("/images/upload", form, {
-      params: apiKey ? { api_key: apiKey } : {},
+      params: options?.apiKey ? { api_key: options.apiKey } : {},
+      signal: options?.signal,
+      onUploadProgress: options?.onProgress
+        ? (e: { loaded: number; total?: number }) => {
+            const total = e.total ?? file.size
+            const percent = total ? Math.min(99, Math.round((e.loaded / total) * 100)) : 0
+            options.onProgress!(percent)
+          }
+        : undefined,
     })
   },
   deleteImage: (id: number) => request.delete(`/images/${id}`),
