@@ -5,6 +5,7 @@ import type { UploadCustomRequestOptions } from "naive-ui"
 import { CloudUploadOutline, CloseOutline } from "@vicons/ionicons5"
 import api, { type Image } from "@/api"
 import { copyText, formatSize } from "@/utils/format"
+import { resolveUrl } from "@/utils/url"
 
 const message = useMessage()
 const recent = ref<Image[]>([])
@@ -81,7 +82,7 @@ function cancelTask(task: UploadTask) {
 }
 
 async function copyUrl(url: string) {
-  await copyText(url)
+  await copyText(resolveUrl(url))
   message.success("链接已复制")
 }
 </script>
@@ -163,7 +164,7 @@ async function copyUrl(url: string) {
         </div>
         <div v-for="img in recent" :key="img.id" class="img-tile press">
           <div class="img-thumb">
-            <n-image :src="img.url" object-fit="cover" />
+            <n-image :src="resolveUrl(img.url)" object-fit="cover" />
           </div>
           <div class="img-meta">
             <n-text :ellipsis="true" style="max-width: 100%; font-weight: 600; font-size: 13px">

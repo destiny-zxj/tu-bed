@@ -18,6 +18,7 @@ import {
 import { PricetagsOutline, CloseOutline } from "@vicons/ionicons5"
 import api, { type Image, type Tag } from "@/api"
 import { copyText, formatDate, formatSize } from "@/utils/format"
+import { resolveUrl } from "@/utils/url"
 
 const message = useMessage()
 const route = useRoute()
@@ -73,7 +74,7 @@ async function remove(id: number) {
 }
 
 async function copy(url: string) {
-  await copyText(url)
+  await copyText(resolveUrl(url))
   message.success("链接已复制")
 }
 
@@ -152,7 +153,7 @@ onMounted(() => {
       <div v-else class="img-masonry">
         <div v-for="img in items" :key="img.id" class="img-tile">
           <div class="img-thumb">
-            <n-image :src="img.url" object-fit="cover" />
+            <n-image :src="resolveUrl(img.url)" object-fit="cover" />
           </div>
           <div class="img-meta">
             <n-text :ellipsis="true" style="max-width: 100%; font-weight: 600; font-size: 13px">

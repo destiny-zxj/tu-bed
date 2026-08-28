@@ -1,8 +1,9 @@
 import axios from "axios"
 import { useAuthStore } from "@/stores/auth"
+import { API_BASE } from "@/config"
 
 const request = axios.create({
-  baseURL: "/api",
+  baseURL: `${API_BASE.replace(/\/$/, "")}/api`,
   timeout: 30000,
 })
 

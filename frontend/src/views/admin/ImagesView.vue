@@ -23,6 +23,7 @@ import {
 } from "naive-ui"
 import api, { type Image, type User } from "@/api"
 import { copyText, formatDate, formatSize } from "@/utils/format"
+import { resolveUrl } from "@/utils/url"
 
 const message = useMessage()
 const items = ref<Image[]>([])
@@ -123,7 +124,7 @@ async function removeBatch() {
 }
 
 async function copy(url: string) {
-  await copyText(url)
+  await copyText(resolveUrl(url))
   message.success("链接已复制")
 }
 
@@ -189,7 +190,7 @@ const columns = computed<DataTableColumns<Image>>(() => [
     key: "url",
     width: 100,
     align: "center",
-    render: (row) => h(NImage, { src: row.url, width: 60, height: 60, "object-fit": "cover", "preview-src": row.url }),
+    render: (row) => h(NImage, { src: resolveUrl(row.url), width: 60, height: 60, "object-fit": "cover", "preview-src": resolveUrl(row.url) }),
   },
   {
     title: "文件名",
