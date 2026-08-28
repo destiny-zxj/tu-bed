@@ -30,6 +30,7 @@ const router = createRouter({
         { path: "users", name: "admin-users", component: () => import("@/views/admin/UsersView.vue") },
         { path: "images", name: "admin-images", component: () => import("@/views/admin/ImagesView.vue") },
         { path: "apikeys", name: "admin-apikeys", component: () => import("@/views/admin/ApiKeysView.vue") },
+        { path: "settings", name: "admin-settings", component: () => import("@/views/admin/SettingsView.vue") },
       ],
     },
     { path: "/:pathMatch(.*)*", redirect: "/app" },

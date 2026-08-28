@@ -129,7 +129,7 @@ def delete_any_image(image_id: int, admin: User = Depends(require_admin), db: Se
     image = db.get(Image, image_id)
     if not image:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="图片不存在")
-    delete_file(image.storage_path)
+    delete_file(image.storage_path, image.storage_drive)
     db.delete(image)
     db.commit()
 
@@ -148,7 +148,7 @@ def batch_delete_images(
     found_ids = {img.id for img in images}
     # 删除物理文件与数据库记录
     for img in images:
-        delete_file(img.storage_path)
+        delete_file(img.storage_path, img.storage_drive)
         db.delete(img)
     db.commit()
     deleted = len(images)

@@ -18,6 +18,8 @@ class Image(SQLModel, table=True):
     filename: str = Field(max_length=255)
     original_name: str = Field(max_length=255)
     storage_path: str = Field(max_length=512)
+    # 上传时使用的存储驱动, 删除时据此定位到正确的存储后端
+    storage_drive: str = Field(max_length=16, default="local")
     url: str = Field(max_length=512)
     mime_type: str = Field(max_length=64)
     size: int

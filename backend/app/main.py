@@ -12,6 +12,7 @@ from app.modules.admin.views import router as admin_router
 from app.modules.apikeys.views import router as apikeys_router
 from app.modules.auth.views import router as auth_router
 from app.modules.images.views import router as images_router
+from app.modules.settings.views import router as settings_router
 from app.modules.tags.views import image_tags_router, router as tags_router
 
 app = FastAPI(title=settings.app_name, debug=settings.debug)
@@ -31,6 +32,7 @@ app.include_router(tags_router)
 app.include_router(image_tags_router)
 app.include_router(apikeys_router)
 app.include_router(admin_router)
+app.include_router(settings_router)
 
 # 本地存储时, 将上传目录挂载为静态文件服务, 供 /uploads 路径访问
 if settings.drive == "local":

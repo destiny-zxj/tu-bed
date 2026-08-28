@@ -68,6 +68,7 @@ async def upload_image(
         filename=meta["filename"],
         original_name=meta["original_name"],
         storage_path=meta["storage_path"],
+        storage_drive=meta["drive"],
         url=meta["url"],
         mime_type=file.content_type or "application/octet-stream",
         size=len(content),
@@ -114,6 +115,6 @@ def delete_image(
     image = db.query(Image).filter(Image.id == image_id, Image.owner_id == current_user.id).first()
     if not image:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="图片不存在")
-    delete_file(image.storage_path)
+    delete_file(image.storage_path, image.storage_drive)
     db.delete(image)
     db.commit()

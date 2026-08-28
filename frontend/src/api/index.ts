@@ -128,6 +128,42 @@ const api = {
     request.post<{ deleted: number; skipped: number; missing_ids: number[] }>("/admin/images/batch-delete", {
       image_ids: ids,
     }),
+
+  // settings - user
+  updateEmail: (email: string) => request.put<User>("/settings/user/email", { email }),
+  updatePassword: (current_password: string, new_password: string) =>
+    request.put<{ message: string }>("/settings/user/password", { current_password, new_password }),
+
+  // settings - system storage
+  getStorageConfig: () => request.get<StorageConfig>("/settings/storage"),
+  updateStorageConfig: (data: Partial<StorageConfig>) =>
+    request.put<StorageConfig>("/settings/storage", data),
+}
+
+export interface StorageConfig {
+  drive: "local" | "s3" | "qiniu" | "oss" | "cos"
+  upload_dir?: string | null
+  public_base_url?: string | null
+  qiniu_access_key?: string | null
+  qiniu_secret_key?: string | null
+  qiniu_bucket?: string | null
+  qiniu_domain?: string | null
+  s3_endpoint_url?: string | null
+  s3_region_name?: string | null
+  s3_access_key?: string | null
+  s3_secret_key?: string | null
+  s3_bucket?: string | null
+  s3_public_domain?: string | null
+  oss_endpoint?: string | null
+  oss_bucket_name?: string | null
+  oss_access_key_id?: string | null
+  oss_access_key_secret?: string | null
+  oss_public_url?: string | null
+  cos_region?: string | null
+  cos_bucket?: string | null
+  cos_secret_id?: string | null
+  cos_secret_key?: string | null
+  cos_public_url?: string | null
 }
 
 export default api

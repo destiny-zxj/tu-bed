@@ -4,9 +4,11 @@ import { useMessage, NCard, NSpace, NDataTable, NButton, NModal, NForm, NFormIte
 import type { DataTableColumns, SelectOption } from "naive-ui"
 import api, { type User } from "@/api"
 import { formatDate } from "@/utils/format"
+import { useAuthStore } from "@/stores/auth"
 
 const message = useMessage()
 const dialog = useDialog()
+const auth = useAuthStore()
 const users = ref<User[]>([])
 const loading = ref(false)
 const total = ref(0)
@@ -20,6 +22,11 @@ const pageSizeOptions: SelectOption[] = [
   { label: "10 条/页", value: 10 },
   { label: "20 条/页", value: 20 },
   { label: "30 条/页", value: 30 },
+]
+
+const roleOptions: SelectOption[] = [
+  { label: "普通用户", value: "false" },
+  { label: "管理员", value: "true" },
 ]
 
 async function load() {
@@ -85,6 +92,21 @@ async function toggleActive(row: User) {
   await load()
 }
 
+async function updateRole(row: User, value: boolean) {
+  // 禁止管理员取消自己的管理员权限, 避免系统无管理员
+  if (row.id === auth.user?.id && !value) {
+    message.warning("不能取消自己的管理员权限")
+    return
+  }
+  try {
+    await api.adminUpdateUser(row.id, { is_admin: value })
+    message.success(value ? "已设为管理员" : "已改为普通用户")
+    await load()
+  } catch (e: any) {
+    message.error(e?.response?.data?.detail || "修改失败")
+  }
+}
+
 const columns = (): DataTableColumns<User> => [
   { title: "ID", key: "id", width: 70 },
   { title: "用户名", key: "username", minWidth: 120 },
@@ -93,8 +115,13 @@ const columns = (): DataTableColumns<User> => [
     title: "角色",
     key: "is_admin",
     render: (row) =>
-      h(NTag, { type: row.is_admin ? "warning" : "default", round: true }, {
-        default: () => (row.is_admin ? "管理员" : "普通用户"),
+      h(NSelect, {
+        value: String(row.is_admin),
+        options: roleOptions,
+        size: "small",
+        style: "width: 110px",
+        "aria-label": "修改角色",
+        onUpdateValue: (value: string) => updateRole(row, value === "true"),
       }),
   },
   {

@@ -1,8 +1,6 @@
 import { fileURLToPath, URL } from "node:url";
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
-// 后端 API 地址, 可通过环境变量覆盖
-var API_TARGET = process.env.VITE_API_TARGET || "http://localhost:8000";
 export default defineConfig({
     plugins: [vue()],
     resolve: {
@@ -12,15 +10,5 @@ export default defineConfig({
     },
     server: {
         port: 5173,
-        proxy: {
-            "/api": {
-                target: API_TARGET,
-                changeOrigin: true,
-            },
-            "/uploads": {
-                target: API_TARGET,
-                changeOrigin: true,
-            },
-        },
     },
 });

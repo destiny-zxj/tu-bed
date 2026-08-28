@@ -5,7 +5,7 @@ import type { MenuOption } from "naive-ui"
 import { h, computed, ref, onMounted, onBeforeUnmount } from "vue"
 import { useAuthStore } from "@/stores/auth"
 import { useMessage } from "naive-ui"
-import { BarChartOutline, PersonOutline, ImageOutline, KeyOutline, CloudUploadOutline } from "@vicons/ionicons5"
+import { BarChartOutline, PersonOutline, ImageOutline, KeyOutline, CloudUploadOutline, SettingsOutline } from "@vicons/ionicons5"
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -17,6 +17,7 @@ const menuOptions: MenuOption[] = [
   { label: "图片管理", key: "/admin/images", icon: () => h(NIcon, null, { default: () => h(ImageOutline) }) },
   { label: "API Keys 管理", key: "/admin/apikeys", icon: () => h(NIcon, null, { default: () => h(KeyOutline) }) },
   { label: "图床客户端", key: "/app", icon: () => h(NIcon, null, { default: () => h(CloudUploadOutline) }) },
+  { label: "设置", key: "/admin/settings", icon: () => h(NIcon, null, { default: () => h(SettingsOutline) }) },
 ]
 
 const activeKey = computed(() => {
@@ -24,6 +25,7 @@ const activeKey = computed(() => {
   if (p.startsWith("/admin/users")) return "/admin/users"
   if (p.startsWith("/admin/images")) return "/admin/images"
   if (p.startsWith("/admin/apikeys")) return "/admin/apikeys"
+  if (p.startsWith("/admin/settings")) return "/admin/settings"
   return "/admin"
 })
 

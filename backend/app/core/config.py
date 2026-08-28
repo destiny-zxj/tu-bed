@@ -43,6 +43,20 @@ class Settings(BaseSettings):
     # 留空则使用 endpoint_url + bucket 的形式拼接。
     s3_public_domain: str = ""
 
+    # 阿里云 OSS 对象存储配置
+    oss_endpoint: str = ""  # 例如 https://oss-cn-hangzhou.aliyuncs.com
+    oss_bucket_name: str = ""
+    oss_access_key_id: str = ""
+    oss_access_key_secret: str = ""
+    oss_public_url: str = ""  # 访问外链域名, 例如 https://cdn.example.com
+
+    # 腾讯云 COS 对象存储配置
+    cos_region: str = ""  # 例如 ap-guangzhou
+    cos_bucket: str = ""  # 例如 example-1250000000
+    cos_secret_id: str = ""
+    cos_secret_key: str = ""
+    cos_public_url: str = ""  # 访问外链域名, 例如 https://cdn.example.com
+
     admin_username: str = "admin"
     admin_password: str = "admin123456"
     admin_email: str = "admin@example.com"
